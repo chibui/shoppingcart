@@ -1,3 +1,67 @@
-<h1>{{title}}</h1>
-<p>Welcome to {{title}}</p>
-<footer>Class of 2016</footer>
+<style>
+  item {
+    margin: 20px;
+    border: 1px solid red;
+    display: block;
+    text-align: center;
+  }
+</style>
+
+<div id="shoppingcart">
+  <!-- adding our own methods -->
+  <p><totalCost></totalCost></p>
+  <p><Quantity></Quantity></p>
+  <Cartitems></Cartitems>
+</div>
+
+<script>
+  function cartApi(http, url, data, success, method){  // convienience method for calling the cart api. making it reusable everywhere
+    $.ajax({
+      dataType: "json",
+      method: http,
+      url: url,
+      data: data,
+      success: success
+    });
+  }
+
+  function getCart(){ // dont use it as a self executing function as not in global
+        cartApi("GET", "/api/cart", {}, function(data){
+      console.log("API Data", data);
+
+      $("cartitems").html(""); // clear out items on refresh dont append
+      $("quantity").html(data.totalCartQuantity + " items in your cart");
+      $("totalcost").html("Total Cost of Cart $" + data.totalCost);
+
+      if( !data.cart.length ) {
+        $("cartitems").html("you have no items in your cart.");
+      }
+
+      for( var item in data.cart) {
+        var items = $("<item></item>").attr({"data-id": data.cart[item].id}).click(removeItemFromCart); //on click event(jquery)
+
+        var brand = $("<p></p>").html(data.cart[item].brand);
+        items.append(brand);
+
+        var name = $("<p></p>").html(data.cart[item].name);
+        items.append(name);
+
+        var price = $("<p></p>").html(data.cart[item].price);
+        items.append(price);
+
+        $("cartitems").append(items)
+      }
+    });
+  }
+
+  function removeItemFromCart( el ){ // dont use it as a self executing function as not in global
+    var id = $(el.currentTarget).attr("data-id"); // set item id
+    cartApi("DELETE", "/api/cart/remove/" + id, {}, function(data){
+      getCart();
+    });
+  }
+
+  $(document).ready(function(){ // get cart when the page is ready.
+    getCart();
+  });
+</script>
